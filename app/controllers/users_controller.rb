@@ -1,21 +1,45 @@
 class UsersController < ApplicationController
   def index
-    render({ :template => "users/index.html.erb" })
+    users = User.all
+    @list_of_users = users.order({:username => :asc})
+
+    render({ :template => "user/index.html.erb" })
   end
 
   def show
-    render({ :template => "users/show.html.erb" })
+    if session.fetch(:user_id) != nil
+    user = params.fetch("username")
+    matching_user = User.where({ :username => user }).first
+    @the_user = matching_user
+
+
+    follow_requests = FollowRequest.all
+    list_of_follow_request = follow_requests.order({:created_at => :desc})
+    @pending_followers = list_of_follow_request.where({:recipient_id => @current_user.id})
+
+
+    render({ :template => "user/show.html.erb" })
+    else
+      redirect_to("/user_sign_in", { :alert => "You need to sign in first." })
+    end
   end
 
   def liked_photos
-    render({ :template => "users/liked_photos.html.erb" })
+    @photos = @current_user.photos
+
+    render({ :template => "user/liked_photos.html.erb" })
   end
 
   def feed
-    render({ :template => "users/feed.html.erb" })
+    user = params.fetch("username")
+    matching_user = User.where({ :username => user }).first
+    @the_user = matching_user
+    @accepted_follow_request_count = @current_user.sent_follow_requests.where({ :status => "accepted"}).count
+    @accepted_follow_request = @current_user.sent_follow_requests.where({ :status => "accepted"})
+    render({ :template => "user/feed.html.erb" })
   end
 
-  def discovery
-    render({ :template => "users/discovery.html.erb" })
+  def discover
+    render({ :template => "user/discover.html.erb" })
   end
 end
